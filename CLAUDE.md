@@ -10,18 +10,23 @@ danger-claude is a Docker image that packages the Claude CLI in a containerized 
 
 ```bash
 # Build the image
+danger-claude --build
+
+# Run in current directory (mounts pwd, creates docker volume for claude config)
+danger-claude
+```
+
+Or directly with Docker:
+
+```bash
 docker build -t danger-claude .
-
-# Run interactively
-docker run -it danger-claude
-
-# Run with a mounted workspace and Claude config
-docker run -it -v $(pwd):/work -v ~/.claude:/home/claude/.claude danger-claude
+docker run --rm -v "$PWD:/myproject" -v "$PWD/.git:/myproject/.git:ro" -v danger-claude:/home/claude/.claude -w /myproject -ti danger-claude
 ```
 
 ## Architecture
 
-The entire project is a single `Dockerfile`:
+- **`bin/danger-claude`**: Ruby CLI script (Homebrew-distributable). Handles `--build` (image build) and default mode (docker run with volume mounts). Uses the current directory name as the container workdir, mounts `.git` as read-only, persists Claude config in a named Docker volume.
+- **`Dockerfile`**:
 
 - **Base**: Debian Bookworm slim
 - **System packages**: build-essential, git, curl, tmux, database client libs (libpq-dev, libmariadb-dev), mise (polyglot version manager)

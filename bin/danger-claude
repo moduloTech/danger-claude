@@ -1,0 +1,65 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "open3"
+require "optparse"
+
+IMAGE_NAME = "danger-claude"
+VOLUME_NAME = "danger-claude"
+
+def run(*cmd)
+  system(*cmd) || exit($?.exitstatus)
+end
+
+def docker_volume_exists?(name)
+  output, status = Open3.capture2("docker", "volume", "inspect", name)
+  status.success?
+end
+
+def ensure_volume(name)
+  return if docker_volume_exists?(name)
+
+  run("docker", "volume", "create", name)
+end
+
+def build
+  dockerfile = File.expand_path("../../Dockerfile", __FILE__)
+  context = File.dirname(dockerfile)
+  run("docker", "build", "-t", IMAGE_NAME, context)
+end
+
+def start
+  ensure_volume(VOLUME_NAME)
+
+  workdir = File.basename(Dir.pwd)
+
+  run(
+    "docker", "run", "--rm",
+    "-v", "#{Dir.pwd}:/#{workdir}",
+    "-v", "#{Dir.pwd}/.git:/#{workdir}/.git:ro",
+    "-v", "#{VOLUME_NAME}:/home/claude/.claude",
+    "-w", "/#{workdir}",
+    "-ti",
+    IMAGE_NAME
+  )
+end
+
+options = {}
+OptionParser.new do |opts|
+  opts.banner = "Usage: danger-claude [options]"
+
+  opts.on("--build", "Build the Docker image") do
+    options[:build] = true
+  end
+
+  opts.on("-h", "--help", "Show this help") do
+    puts opts
+    exit
+  end
+end.parse!
+
+if options[:build]
+  build
+else
+  start
+end
