@@ -12,6 +12,7 @@
 - Print mode (`-p`): output the generated `docker run` command instead of executing it, accepts an optional prompt argument.
 - Commit mode (`-c`): run Claude with read-write git mount for auto-commit workflows.
 - Support for passing custom command to the Docker image after `--`.
+- Persistent mise volume (`danger-claude-mise`) to cache installed tool versions across runs.
 
 ## [0.0.1] - 2026-03-18
 

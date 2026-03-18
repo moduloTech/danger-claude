@@ -6,6 +6,7 @@ require "optparse"
 
 IMAGE_NAME = "danger-claude"
 VOLUME_NAME = "danger-claude"
+MISE_VOLUME_NAME = "danger-claude-mise"
 
 def run(*cmd)
   system(*cmd) || exit($?.exitstatus)
@@ -30,6 +31,7 @@ end
 
 def start(command_args, git_readonly: true)
   ensure_volume(VOLUME_NAME)
+  ensure_volume(MISE_VOLUME_NAME)
 
   workdir = File.basename(Dir.pwd)
   git_mount = "#{Dir.pwd}/.git:/#{workdir}/.git"
@@ -40,6 +42,7 @@ def start(command_args, git_readonly: true)
     "-v", "#{Dir.pwd}:/#{workdir}",
     "-v", git_mount,
     "-v", "#{VOLUME_NAME}:/home/claude/.claude",
+    "-v", "#{MISE_VOLUME_NAME}:/home/claude/.local/share/mise",
     "-w", "/home/claude/#{workdir}",
     "-ti",
     IMAGE_NAME,
