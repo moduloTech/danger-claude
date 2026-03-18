@@ -33,6 +33,6 @@ RUN curl -fsSL https://claude.ai/install.sh | bash
 
 ENV PATH="/home/claude/.local/bin:${PATH}"
 
-WORKDIR /work
+WORKDIR /home/claude
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["claude", "--dangerously-skip-permissions"]

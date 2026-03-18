@@ -38,7 +38,7 @@ def start
     "-v", "#{Dir.pwd}:/#{workdir}",
     "-v", "#{Dir.pwd}/.git:/#{workdir}/.git:ro",
     "-v", "#{VOLUME_NAME}:/home/claude/.claude",
-    "-w", "/#{workdir}",
+    "-w", "/home/claude/#{workdir}",
     "-ti",
     IMAGE_NAME
   )
