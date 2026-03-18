@@ -29,6 +29,20 @@ def build
   run("docker", "build", "-t", IMAGE_NAME, context)
 end
 
+def git_config(key)
+  output, status = Open3.capture2("git", "config", "--get", key)
+  status.success? ? output.strip : nil
+end
+
+def git_env_args
+  args = []
+  name = git_config("user.name")
+  email = git_config("user.email")
+  args.push("-e", "GIT_AUTHOR_NAME=#{name}", "-e", "GIT_COMMITTER_NAME=#{name}") if name
+  args.push("-e", "GIT_AUTHOR_EMAIL=#{email}", "-e", "GIT_COMMITTER_EMAIL=#{email}") if email
+  args
+end
+
 def start(command_args, git_readonly: true)
   ensure_volume(VOLUME_NAME)
   ensure_volume(MISE_VOLUME_NAME)
@@ -43,6 +57,7 @@ def start(command_args, git_readonly: true)
     "-v", git_mount,
     "-v", "#{VOLUME_NAME}:/home/claude/.claude",
     "-v", "#{MISE_VOLUME_NAME}:/home/claude/.local/share/mise",
+    *git_env_args,
     "-w", "/home/claude/#{workdir}",
     "-ti",
     IMAGE_NAME,

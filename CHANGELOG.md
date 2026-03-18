@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.0.2.2] - 2026-03-18
+
+### Added
+
+- Forward host `user.name` and `user.email` git config into the container via environment variables, so commits made inside the container use the correct author identity.
+
 ## [0.0.2.1] - 2026-03-18
 
 ### Fixed
