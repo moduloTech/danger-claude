@@ -34,12 +34,12 @@ def start(command_args, git_readonly: true)
   ensure_volume(MISE_VOLUME_NAME)
 
   workdir = File.basename(Dir.pwd)
-  git_mount = "#{Dir.pwd}/.git:/#{workdir}/.git"
+  git_mount = "#{Dir.pwd}/.git:/home/claude/#{workdir}/.git"
   git_mount += ":ro" if git_readonly
 
   docker_cmd = [
     "docker", "run", "--rm",
-    "-v", "#{Dir.pwd}:/#{workdir}",
+    "-v", "#{Dir.pwd}:/home/claude/#{workdir}",
     "-v", git_mount,
     "-v", "#{VOLUME_NAME}:/home/claude/.claude",
     "-v", "#{MISE_VOLUME_NAME}:/home/claude/.local/share/mise",
