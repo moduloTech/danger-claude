@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.0.2.4] - 2026-03-18
+
+### Fixed
+
+- Use `File.realpath` to resolve Homebrew symlinks when locating the Dockerfile, so `--build` finds the Cellar prefix instead of `/opt/homebrew`.
+
 ## [0.0.2.3] - 2026-03-18
 
 ### Fixed

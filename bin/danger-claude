@@ -24,7 +24,7 @@ def ensure_volume(name)
 end
 
 def build
-  prefix = File.expand_path("../..", __FILE__)
+  prefix = File.expand_path("../..", File.realpath(__FILE__))
   dockerfile = File.join(prefix, "Dockerfile")
   unless File.exist?(dockerfile)
     abort "Error: Dockerfile not found at #{dockerfile}"
