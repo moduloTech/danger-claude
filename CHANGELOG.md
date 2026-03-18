@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.0.2.3] - 2026-03-18
+
+### Fixed
+
+- Fix `--build` to work when installed via Homebrew by resolving the Dockerfile relative to the script's prefix directory and passing it explicitly to `docker build -f`. Add error message when Dockerfile is missing.
+
 ## [0.0.2.2] - 2026-03-18
 
 ### Added

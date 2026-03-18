@@ -24,9 +24,12 @@ def ensure_volume(name)
 end
 
 def build
-  dockerfile = File.expand_path("../../Dockerfile", __FILE__)
-  context = File.dirname(dockerfile)
-  run("docker", "build", "-t", IMAGE_NAME, context)
+  prefix = File.expand_path("../..", __FILE__)
+  dockerfile = File.join(prefix, "Dockerfile")
+  unless File.exist?(dockerfile)
+    abort "Error: Dockerfile not found at #{dockerfile}"
+  end
+  run("docker", "build", "-t", IMAGE_NAME, "-f", dockerfile, prefix)
 end
 
 def git_config(key)
