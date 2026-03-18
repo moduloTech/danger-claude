@@ -28,28 +28,54 @@ def build
   run("docker", "build", "-t", IMAGE_NAME, context)
 end
 
-def start
+def start(command_args, git_readonly: true)
   ensure_volume(VOLUME_NAME)
 
   workdir = File.basename(Dir.pwd)
+  git_mount = "#{Dir.pwd}/.git:/#{workdir}/.git"
+  git_mount += ":ro" if git_readonly
 
-  run(
+  docker_cmd = [
     "docker", "run", "--rm",
     "-v", "#{Dir.pwd}:/#{workdir}",
-    "-v", "#{Dir.pwd}/.git:/#{workdir}/.git:ro",
+    "-v", git_mount,
     "-v", "#{VOLUME_NAME}:/home/claude/.claude",
     "-w", "/home/claude/#{workdir}",
     "-ti",
-    IMAGE_NAME
-  )
+    IMAGE_NAME,
+    *command_args
+  ]
+
+  run(*docker_cmd)
 end
 
 options = {}
 OptionParser.new do |opts|
-  opts.banner = "Usage: danger-claude [options]"
+  opts.banner = <<~BANNER
+    Usage: danger-claude [options] [-- command...]
 
-  opts.on("--build", "Build the Docker image") do
+    Examples:
+      danger-claude                         # Run claude (default)
+      danger-claude -s                      # Open a shell
+      danger-claude -p "explain this code"  # Print mode (non-interactive)
+      danger-claude -c                      # Auto-commit all changes
+      danger-claude -- claude -p "hello"    # Run claude with custom args
+  BANNER
+
+  opts.on("-b", "--build", "Build the Docker image") do
     options[:build] = true
+  end
+
+  opts.on("-s", "--shell", "Open a bash shell") do
+    options[:shell] = true
+  end
+
+  opts.on("-p", "--print PROMPT", "Run claude in print mode with the given prompt (skipping permissions)") do |prompt|
+    options[:print] = prompt
+  end
+
+  opts.on("-c", "--commit", "Auto-commit all changes with a detailed commit message") do
+    options[:commit] = true
   end
 
   opts.on("-h", "--help", "Show this help") do
@@ -60,6 +86,17 @@ end.parse!
 
 if options[:build]
   build
+elsif options[:shell]
+  start(["bash"])
+elsif options[:print]
+  start(["claude", "-p", "--dangerously-skip-permissions", options[:print]])
+elsif options[:commit]
+  commit_prompt = <<~PROMPT
+    Review all current git changes (staged and unstaged), add all changes, and create a single commit with a precise and detailed commit message. \
+    The commit message should have a concise summary line followed by a detailed body explaining what changed and why. \
+    Do not push. Do not ask for confirmation.
+  PROMPT
+  start(["claude", "-p", "--dangerously-skip-permissions", commit_prompt.strip], git_readonly: false)
 else
-  start
+  start(ARGV)
 end
