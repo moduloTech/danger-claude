@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.0.3] - 2026-03-19
+
 ### Added
 
 - New `-v`/`--volume` CLI option to mount additional Docker volumes into the container. Accepts a bare host path (mounted at the same path) or a `host_path:container_path` pair. Can be specified multiple times.
