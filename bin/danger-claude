@@ -46,7 +46,7 @@ def git_env_args
   args
 end
 
-def start(command_args, git_readonly: true)
+def start(command_args, git_readonly: true, extra_volumes: [])
   ensure_volume(VOLUME_NAME)
   ensure_volume(MISE_VOLUME_NAME)
 
@@ -54,12 +54,18 @@ def start(command_args, git_readonly: true)
   git_mount = "#{Dir.pwd}/.git:/home/claude/#{workdir}/.git"
   git_mount += ":ro" if git_readonly
 
+  volume_args = extra_volumes.flat_map do |vol|
+    mount = vol.include?(":") ? vol : "#{vol}:#{vol}"
+    ["-v", mount]
+  end
+
   docker_cmd = [
     "docker", "run", "--rm",
     "-v", "#{Dir.pwd}:/home/claude/#{workdir}",
     "-v", git_mount,
     "-v", "#{VOLUME_NAME}:/home/claude/.claude",
     "-v", "#{MISE_VOLUME_NAME}:/home/claude/.local/share/mise",
+    *volume_args,
     *git_env_args,
     "-w", "/home/claude/#{workdir}",
     "-ti",
@@ -70,7 +76,7 @@ def start(command_args, git_readonly: true)
   run(*docker_cmd)
 end
 
-options = {}
+options = { volumes: [] }
 OptionParser.new do |opts|
   opts.banner = <<~BANNER
     Usage: danger-claude [options] [-- command...]
@@ -99,6 +105,10 @@ OptionParser.new do |opts|
     options[:commit] = true
   end
 
+  opts.on("-v", "--volume PATH", "Mount an additional volume (host_path or host_path:container_path)") do |vol|
+    options[:volumes] << vol
+  end
+
   opts.on("-h", "--help", "Show this help") do
     puts opts
     exit
@@ -108,16 +118,16 @@ end.parse!
 if options[:build]
   build
 elsif options[:shell]
-  start(["bash"])
+  start(["bash"], extra_volumes: options[:volumes])
 elsif options[:print]
-  start(["claude", "-p", "--dangerously-skip-permissions", options[:print]])
+  start(["claude", "-p", "--dangerously-skip-permissions", options[:print]], extra_volumes: options[:volumes])
 elsif options[:commit]
   commit_prompt = <<~PROMPT
     Review all current git changes (staged and unstaged), add all changes, and create a single commit with a precise and detailed commit message. \
     The commit message should have a concise summary line followed by a detailed body explaining what changed and why. \
     Do not push. Do not ask for confirmation.
   PROMPT
-  start(["claude", "-p", "--dangerously-skip-permissions", commit_prompt.strip], git_readonly: false)
+  start(["claude", "-p", "--dangerously-skip-permissions", commit_prompt.strip], git_readonly: false, extra_volumes: options[:volumes])
 else
-  start(ARGV)
+  start(ARGV, extra_volumes: options[:volumes])
 end
