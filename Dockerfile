@@ -31,7 +31,10 @@ fi\n\
 exec "${@:-bash}"\n' > /entrypoint.sh \
     && chmod +x /entrypoint.sh
 
-RUN mkdir -p /home/claude/.config/gh && chown -R claude:claude /home/claude/.config
+# Pre-create mount points for named volumes so they inherit claude ownership
+# instead of being created as root by Docker on first mount.
+RUN mkdir -p /home/claude/.config/gh /home/claude/.local/share/mise \
+    && chown -R claude:claude /home/claude/.config /home/claude/.local
 
 USER claude
 

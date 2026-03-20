@@ -5,6 +5,11 @@
 ### Added
 
 - New `-g`/`--git-rw` option to mount `.git` as read-write. By default `.git` is mounted read-only; `-c` implies `--git-rw`. Works with all modes (`-s`, `-p`, default, `--`).
+- Pre-create mount points for named volumes (`mise`, `gh`) in the Dockerfile so they inherit `claude` ownership instead of being created as root by Docker.
+
+### Changed
+
+- Rewrite CLI usage banner to document all modes and the read-only/read-write distinction.
 
 ### Fixed
 
