@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- New `-g`/`--git-rw` option to mount `.git` as read-write. By default `.git` is mounted read-only; `-c` implies `--git-rw`. Works with all modes (`-s`, `-p`, default, `--`).
+
 ### Fixed
 
 - Use `-i` instead of `-ti` when stdin is not a TTY, allowing non-interactive use from scripts and subprocesses (e.g. `autodev`).

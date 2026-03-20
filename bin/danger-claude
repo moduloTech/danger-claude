@@ -107,12 +107,16 @@ OptionParser.new do |opts|
   opts.banner = <<~BANNER
     Usage: danger-claude [options] [-- command...]
 
-    Examples:
-      danger-claude                         # Run claude (default)
-      danger-claude -s                      # Open a shell
-      danger-claude -p "explain this code"  # Print mode (non-interactive)
-      danger-claude -c                      # Auto-commit all changes
-      danger-claude -- claude -p "hello"    # Run claude with custom args
+    Run Claude CLI inside a containerized environment.
+
+    Modes (mutually exclusive):
+      danger-claude                         Interactive claude session (.git read-only)
+      danger-claude -s                      Open a bash shell
+      danger-claude -p "explain this code"  Print mode (non-interactive, .git read-only)
+      danger-claude -c                      Auto-commit all changes (.git read-write)
+      danger-claude -- claude -p "hello"    Run custom command
+
+    Options:
   BANNER
 
   opts.on("-b", "--build", "Build the Docker image") do
@@ -123,12 +127,16 @@ OptionParser.new do |opts|
     options[:shell] = true
   end
 
-  opts.on("-p", "--print PROMPT", "Run claude in print mode with the given prompt (skipping permissions)") do |prompt|
+  opts.on("-p", "--print PROMPT", "Run claude in print mode with the given prompt") do |prompt|
     options[:print] = prompt
   end
 
-  opts.on("-c", "--commit", "Auto-commit all changes with a detailed commit message") do
+  opts.on("-c", "--commit", "Auto-commit all changes (implies --git-rw)") do
     options[:commit] = true
+  end
+
+  opts.on("-g", "--git-rw", "Mount .git as read-write (default: read-only)") do
+    options[:git_rw] = true
   end
 
   opts.on("-v", "--volume PATH", "Mount an additional volume (host_path or host_path:container_path)") do |vol|
@@ -141,12 +149,14 @@ OptionParser.new do |opts|
   end
 end.parse!
 
+git_rw = options[:git_rw] || options[:commit]
+
 if options[:build]
   build
 elsif options[:shell]
-  start(["bash"], extra_volumes: options[:volumes])
+  start(["bash"], git_readonly: !git_rw, extra_volumes: options[:volumes])
 elsif options[:print]
-  start(["claude", "-p", "--dangerously-skip-permissions", options[:print]], extra_volumes: options[:volumes])
+  start(["claude", "-p", "--dangerously-skip-permissions", options[:print]], git_readonly: !git_rw, extra_volumes: options[:volumes])
 elsif options[:commit]
   commit_prompt = <<~PROMPT
     Review all current git changes (staged and unstaged), add all changes, and create a single commit with a precise and detailed commit message. \
@@ -155,5 +165,5 @@ elsif options[:commit]
   PROMPT
   start(["claude", "-p", "--dangerously-skip-permissions", commit_prompt.strip], git_readonly: false, extra_volumes: options[:volumes])
 else
-  start(ARGV, extra_volumes: options[:volumes])
+  start(ARGV, git_readonly: !git_rw, extra_volumes: options[:volumes])
 end
