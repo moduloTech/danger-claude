@@ -94,7 +94,7 @@ def start(command_args, git_readonly: true, extra_volumes: [])
     *ssh_agent_args,
     *gh_token_args,
     "-w", "/home/claude/#{workdir}",
-    "-ti",
+    *($stdin.tty? ? ["-ti"] : ["-i"]),
     IMAGE_NAME,
     *command_args
   ]

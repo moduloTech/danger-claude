@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Use `-i` instead of `-ti` when stdin is not a TTY, allowing non-interactive use from scripts and subprocesses (e.g. `autodev`).
+
 ## [0.0.4] - 2026-03-20
 
 ### Added
