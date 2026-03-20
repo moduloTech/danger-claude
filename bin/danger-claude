@@ -7,6 +7,7 @@ require "optparse"
 IMAGE_NAME = "danger-claude"
 VOLUME_NAME = "danger-claude"
 MISE_VOLUME_NAME = "danger-claude-mise"
+GH_VOLUME_NAME = "danger-claude-gh"
 
 def run(*cmd)
   system(*cmd) || exit($?.exitstatus)
@@ -46,9 +47,31 @@ def git_env_args
   args
 end
 
+def ssh_agent_args
+  sock = ENV["SSH_AUTH_SOCK"]
+  return [] unless sock && File.exist?(sock)
+
+  if RUBY_PLATFORM =~ /darwin/
+    # On macOS, Docker Desktop exposes the SSH agent via a VM-internal socket
+    # with correct permissions, avoiding the root-owned socket issue from
+    # direct host socket mounts.
+    ["-v", "/run/host-services/ssh-auth.sock:/ssh-agent", "-e", "SSH_AUTH_SOCK=/ssh-agent"]
+  else
+    ["-v", "#{sock}:/ssh-agent", "-e", "SSH_AUTH_SOCK=/ssh-agent"]
+  end
+end
+
+def gh_token_args
+  token = ENV["GH_TOKEN"] || ENV["GITHUB_TOKEN"]
+  return [] unless token
+
+  ["-e", "GH_TOKEN=#{token}"]
+end
+
 def start(command_args, git_readonly: true, extra_volumes: [])
   ensure_volume(VOLUME_NAME)
   ensure_volume(MISE_VOLUME_NAME)
+  ensure_volume(GH_VOLUME_NAME)
 
   workdir = File.basename(Dir.pwd)
   git_mount = "#{Dir.pwd}/.git:/home/claude/#{workdir}/.git"
@@ -65,8 +88,11 @@ def start(command_args, git_readonly: true, extra_volumes: [])
     "-v", git_mount,
     "-v", "#{VOLUME_NAME}:/home/claude/.claude",
     "-v", "#{MISE_VOLUME_NAME}:/home/claude/.local/share/mise",
+    "-v", "#{GH_VOLUME_NAME}:/home/claude/.config/gh",
     *volume_args,
     *git_env_args,
+    *ssh_agent_args,
+    *gh_token_args,
     "-w", "/home/claude/#{workdir}",
     "-ti",
     IMAGE_NAME,

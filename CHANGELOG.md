@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Added
+
+- Install GitHub CLI (`gh`) and `openssh-client` in the Docker image.
+- Persistent Docker volume for `gh` config directory across container runs.
+- Forward host SSH agent socket (`SSH_AUTH_SOCK`) into the container when available, enabling git operations over SSH.
+- Pass through `GH_TOKEN` or `GITHUB_TOKEN` env vars into the container for GitHub authentication.
+
 ## [0.0.3] - 2026-03-19
 
 ### Added
