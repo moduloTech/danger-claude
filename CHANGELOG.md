@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.0.5] - 2026-03-23
+
 ### Added
 
 - New `-g`/`--git-rw` option to mount `.git` as read-write. By default `.git` is mounted read-only; `-c` implies `--git-rw`. Works with all modes (`-s`, `-p`, default, `--`).
