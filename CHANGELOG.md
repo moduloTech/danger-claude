@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.0.6] - 2026-03-24
+
 ### Added
 
 - Activate mise in the entrypoint and automatically trust all mounted volumes (workdir + extra `-v` paths) via `mise trust` so that project `.mise.toml` / `.tool-versions` are picked up automatically.
