@@ -28,7 +28,6 @@ elif [ -f "$HOME/.claude.json" ]; then\n\
   cp "$HOME/.claude.json" "$HOME/.claude/.claude.json"\n\
   ln -sf "$HOME/.claude/.claude.json" "$HOME/.claude.json"\n\
 fi\n\
-eval "$(mise activate bash)"\n\
 if [ -n "$MISE_TRUSTED_PATHS" ]; then\n\
   IFS=: read -ra _paths <<< "$MISE_TRUSTED_PATHS"\n\
   for _p in "${_paths[@]}"; do\n\
@@ -37,6 +36,7 @@ if [ -n "$MISE_TRUSTED_PATHS" ]; then\n\
     done\n\
   done\n\
 fi\n\
+eval "$(mise activate bash)"\n\
 exec "${@:-bash}"\n' > /entrypoint.sh \
     && chmod +x /entrypoint.sh
 
