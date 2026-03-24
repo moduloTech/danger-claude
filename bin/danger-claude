@@ -74,7 +74,7 @@ def mise_trusted_paths_args(workdir, extra_volumes)
     container_path = vol.include?(":") ? vol.split(":", 2).last : vol
     paths << container_path
   end
-  ["-e", "MISE_TRUSTED_PATHS=#{paths.map { |p| "\"#{p}\"" }.join(", ")}"]
+  ["-e", "MISE_TRUSTED_PATHS=#{paths.join(":")}"]
 end
 
 def start(command_args, git_readonly: true, extra_volumes: [])

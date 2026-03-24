@@ -30,7 +30,12 @@ elif [ -f "$HOME/.claude.json" ]; then\n\
 fi\n\
 eval "$(mise activate bash)"\n\
 if [ -n "$MISE_TRUSTED_PATHS" ]; then\n\
-  mise settings trusted_config_paths="[$MISE_TRUSTED_PATHS]"\n\
+  IFS=: read -ra _paths <<< "$MISE_TRUSTED_PATHS"\n\
+  for _p in "${_paths[@]}"; do\n\
+    for _f in "$_p/mise.toml" "$_p/.mise.toml" "$_p/.tool-versions"; do\n\
+      [ -f "$_f" ] && mise trust "$_f" 2>/dev/null\n\
+    done\n\
+  done\n\
 fi\n\
 exec "${@:-bash}"\n' > /entrypoint.sh \
     && chmod +x /entrypoint.sh
