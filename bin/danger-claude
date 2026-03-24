@@ -68,6 +68,15 @@ def gh_token_args
   ["-e", "GH_TOKEN=#{token}"]
 end
 
+def mise_trusted_paths_args(workdir, extra_volumes)
+  paths = ["/home/claude/#{workdir}"]
+  extra_volumes.each do |vol|
+    container_path = vol.include?(":") ? vol.split(":", 2).last : vol
+    paths << container_path
+  end
+  ["-e", "MISE_TRUSTED_PATHS=#{paths.map { |p| "\"#{p}\"" }.join(", ")}"]
+end
+
 def start(command_args, git_readonly: true, extra_volumes: [])
   ensure_volume(VOLUME_NAME)
   ensure_volume(MISE_VOLUME_NAME)
@@ -93,6 +102,7 @@ def start(command_args, git_readonly: true, extra_volumes: [])
     *git_env_args,
     *ssh_agent_args,
     *gh_token_args,
+    *mise_trusted_paths_args(workdir, extra_volumes),
     "-w", "/home/claude/#{workdir}",
     *($stdin.tty? ? ["-ti"] : ["-i"]),
     IMAGE_NAME,

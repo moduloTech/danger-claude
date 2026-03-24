@@ -28,6 +28,10 @@ elif [ -f "$HOME/.claude.json" ]; then\n\
   cp "$HOME/.claude.json" "$HOME/.claude/.claude.json"\n\
   ln -sf "$HOME/.claude/.claude.json" "$HOME/.claude.json"\n\
 fi\n\
+eval "$(mise activate bash)"\n\
+if [ -n "$MISE_TRUSTED_PATHS" ]; then\n\
+  mise settings trusted_config_paths="[$MISE_TRUSTED_PATHS]"\n\
+fi\n\
 exec "${@:-bash}"\n' > /entrypoint.sh \
     && chmod +x /entrypoint.sh
 
