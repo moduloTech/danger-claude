@@ -123,6 +123,7 @@ OptionParser.new do |opts|
       danger-claude                         Interactive claude session (.git read-only)
       danger-claude -s                      Open a bash shell
       danger-claude -p "explain this code"  Print mode (non-interactive, .git read-only)
+      danger-claude -p "fix" -a mr-fixer    Print mode with a specific subagent
       danger-claude -c                      Auto-commit all changes (.git read-write)
       danger-claude -- claude -p "hello"    Run custom command
 
@@ -139,6 +140,10 @@ OptionParser.new do |opts|
 
   opts.on("-p", "--print PROMPT", "Run claude in print mode with the given prompt") do |prompt|
     options[:print] = prompt
+  end
+
+  opts.on("-a", "--agent NAME", "Use a specific subagent (passed as --agent to claude)") do |name|
+    options[:agent] = name
   end
 
   opts.on("-c", "--commit", "Auto-commit all changes (implies --git-rw)") do
@@ -166,7 +171,10 @@ if options[:build]
 elsif options[:shell]
   start(["bash"], git_readonly: !git_rw, extra_volumes: options[:volumes])
 elsif options[:print]
-  start(["claude", "-p", "--dangerously-skip-permissions", options[:print]], git_readonly: !git_rw, extra_volumes: options[:volumes])
+  claude_cmd = ["claude", "-p", "--dangerously-skip-permissions"]
+  claude_cmd.push("--agent", options[:agent]) if options[:agent]
+  claude_cmd.push(options[:print])
+  start(claude_cmd, git_readonly: !git_rw, extra_volumes: options[:volumes])
 elsif options[:commit]
   commit_prompt = <<~PROMPT
     Review all current git changes (staged and unstaged), add all changes, and create a single commit with a precise and detailed commit message. \
