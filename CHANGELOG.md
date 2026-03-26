@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-03-26
+
 ### Added
 
 - New `-a`/`--agent NAME` option to run in print mode with a specific Claude Code subagent. Passes `--agent NAME` to the `claude` CLI, enabling subagent-specific system prompts, tool restrictions, models, and persistent memory.
