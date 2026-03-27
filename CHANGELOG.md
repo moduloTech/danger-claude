@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- New `--max-turns N`, `--output-format FORMAT`, and `--json-schema SCHEMA` options forwarded to the `claude` CLI in print mode. Enables compatibility with tools like `mr-review` that rely on these Claude CLI flags.
+
 ## [0.1.0] - 2026-03-26
 
 ### Added

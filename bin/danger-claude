@@ -146,6 +146,18 @@ OptionParser.new do |opts|
     options[:agent] = name
   end
 
+  opts.on("--max-turns N", Integer, "Maximum agent turns (passed to claude)") do |n|
+    options[:max_turns] = n
+  end
+
+  opts.on("--output-format FORMAT", "Output format: text, json, stream-json (passed to claude)") do |fmt|
+    options[:output_format] = fmt
+  end
+
+  opts.on("--json-schema SCHEMA", "JSON schema for structured output (passed to claude)") do |schema|
+    options[:json_schema] = schema
+  end
+
   opts.on("-c", "--commit", "Auto-commit all changes (implies --git-rw)") do
     options[:commit] = true
   end
@@ -173,6 +185,9 @@ elsif options[:shell]
 elsif options[:print]
   claude_cmd = ["claude", "-p", "--dangerously-skip-permissions"]
   claude_cmd.push("--agent", options[:agent]) if options[:agent]
+  claude_cmd.push("--max-turns", options[:max_turns].to_s) if options[:max_turns]
+  claude_cmd.push("--output-format", options[:output_format]) if options[:output_format]
+  claude_cmd.push("--json-schema", options[:json_schema]) if options[:json_schema]
   claude_cmd.push(options[:print])
   start(claude_cmd, git_readonly: !git_rw, extra_volumes: options[:volumes])
 elsif options[:commit]
