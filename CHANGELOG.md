@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-03-31
+
 ### Added
 
 - New `-m`/`--model MODEL` option to select the Claude model (forwarded as `--model` to the `claude` CLI).
