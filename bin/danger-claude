@@ -158,6 +158,14 @@ OptionParser.new do |opts|
     options[:json_schema] = schema
   end
 
+  opts.on("-m", "--model MODEL", "Model to use (passed as --model to claude)") do |model|
+    options[:model] = model
+  end
+
+  opts.on("-e", "--effort LEVEL", "Effort level: low, medium, high (passed as --effort to claude)") do |level|
+    options[:effort] = level
+  end
+
   opts.on("-c", "--commit", "Auto-commit all changes (implies --git-rw)") do
     options[:commit] = true
   end
@@ -188,6 +196,8 @@ elsif options[:print]
   claude_cmd.push("--max-turns", options[:max_turns].to_s) if options[:max_turns]
   claude_cmd.push("--output-format", options[:output_format]) if options[:output_format]
   claude_cmd.push("--json-schema", options[:json_schema]) if options[:json_schema]
+  claude_cmd.push("--model", options[:model]) if options[:model]
+  claude_cmd.push("--effort", options[:effort]) if options[:effort]
   claude_cmd.push(options[:print])
   start(claude_cmd, git_readonly: !git_rw, extra_volumes: options[:volumes])
 elsif options[:commit]
@@ -197,7 +207,11 @@ elsif options[:commit]
     Types: feat (new feature), fix (bug fix), refactor (no behavior change), test, docs, chore (maintenance). \
     Do not push. Do not ask for confirmation.
   PROMPT
-  start(["claude", "-p", "--dangerously-skip-permissions", commit_prompt.strip], git_readonly: false, extra_volumes: options[:volumes])
+  commit_cmd = ["claude", "-p", "--dangerously-skip-permissions"]
+  commit_cmd.push("--model", options[:model]) if options[:model]
+  commit_cmd.push("--effort", options[:effort]) if options[:effort]
+  commit_cmd.push(commit_prompt.strip)
+  start(commit_cmd, git_readonly: false, extra_volumes: options[:volumes])
 else
   start(ARGV, git_readonly: !git_rw, extra_volumes: options[:volumes])
 end

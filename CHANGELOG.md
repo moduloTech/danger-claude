@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- New `-m`/`--model MODEL` option to select the Claude model (forwarded as `--model` to the `claude` CLI).
+- New `-e`/`--effort LEVEL` option to set effort level: low, medium, high (forwarded as `--effort` to the `claude` CLI).
+
 ### Changed
 
 - `-c` (auto-commit) now instructs Claude to use Conventional Commits format (`<type>: <description>`) instead of free-form summary lines.
