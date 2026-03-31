@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- `-c` (auto-commit) now instructs Claude to use Conventional Commits format (`<type>: <description>`) instead of free-form summary lines.
+
 ## [0.1.1] - 2026-03-27
 
 ### Added

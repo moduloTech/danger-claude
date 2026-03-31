@@ -192,8 +192,9 @@ elsif options[:print]
   start(claude_cmd, git_readonly: !git_rw, extra_volumes: options[:volumes])
 elsif options[:commit]
   commit_prompt = <<~PROMPT
-    Review all current git changes (staged and unstaged), add all changes, and create a single commit with a precise and detailed commit message. \
-    The commit message should have a concise summary line followed by a detailed body explaining what changed and why. \
+    Review all current git changes (staged and unstaged), add all changes, and create a single commit. \
+    Use Conventional Commits format: `<type>: <description>` summary line followed by a blank line and a detailed body explaining what changed and why. \
+    Types: feat (new feature), fix (bug fix), refactor (no behavior change), test, docs, chore (maintenance). \
     Do not push. Do not ask for confirmation.
   PROMPT
   start(["claude", "-p", "--dangerously-skip-permissions", commit_prompt.strip], git_readonly: false, extra_volumes: options[:volumes])
