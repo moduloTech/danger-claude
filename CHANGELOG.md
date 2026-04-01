@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- `--version` CLI flag to display the current version.
+
 ## [0.2.0] - 2026-03-31
 
 ### Added
