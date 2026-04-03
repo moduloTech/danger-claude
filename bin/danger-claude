@@ -125,6 +125,7 @@ OptionParser.new do |opts|
       danger-claude -s                      Open a bash shell
       danger-claude -p "explain this code"  Print mode (non-interactive, .git read-only)
       danger-claude -p "fix" -a mr-fixer    Print mode with a specific subagent
+      danger-claude -r SESSION_ID          Resume a previous session
       danger-claude -c                      Auto-commit all changes (.git read-write)
       danger-claude -- claude -p "hello"    Run custom command
 
@@ -167,6 +168,10 @@ OptionParser.new do |opts|
     options[:effort] = level
   end
 
+  opts.on("-r", "--resume SESSION_ID", "Resume a previous session (passed as --resume to claude)") do |sid|
+    options[:resume] = sid
+  end
+
   opts.on("-c", "--commit", "Auto-commit all changes (implies --git-rw)") do
     options[:commit] = true
   end
@@ -198,6 +203,7 @@ elsif options[:shell]
   start(["bash"], git_readonly: !git_rw, extra_volumes: options[:volumes])
 elsif options[:print]
   claude_cmd = ["claude", "-p", "--dangerously-skip-permissions"]
+  claude_cmd.push("--resume", options[:resume]) if options[:resume]
   claude_cmd.push("--agent", options[:agent]) if options[:agent]
   claude_cmd.push("--max-turns", options[:max_turns].to_s) if options[:max_turns]
   claude_cmd.push("--output-format", options[:output_format]) if options[:output_format]
@@ -218,6 +224,9 @@ elsif options[:commit]
   commit_cmd.push("--effort", options[:effort]) if options[:effort]
   commit_cmd.push(commit_prompt.strip)
   start(commit_cmd, git_readonly: false, extra_volumes: options[:volumes])
+elsif options[:resume]
+  claude_cmd = ["claude", "--dangerously-skip-permissions", "--resume", options[:resume]]
+  start(claude_cmd, git_readonly: !git_rw, extra_volumes: options[:volumes])
 else
   start(ARGV, git_readonly: !git_rw, extra_volumes: options[:volumes])
 end

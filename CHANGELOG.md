@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- `-r` / `--resume SESSION_ID` flag to resume a previous Claude session. Works in both print mode (`-p -r`) and interactive mode (`-r` alone).
+
 ## [0.2.1] - 2026-04-02
 
 ### Added
