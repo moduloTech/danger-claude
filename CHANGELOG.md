@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-04-07
+
 ### Added
 
 - `--add-host=host.docker.internal:host-gateway` on Linux so containers can reach host services (e.g. Chrome DevTools).
