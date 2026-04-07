@@ -78,6 +78,14 @@ def mise_trusted_paths_args(workdir, extra_volumes)
   ["-e", "MISE_TRUSTED_PATHS=#{paths.join(":")}"]
 end
 
+def host_gateway_args
+  # On Linux, host.docker.internal doesn't resolve by default.
+  # Docker Desktop (macOS/Windows) provides it automatically.
+  return [] if RUBY_PLATFORM =~ /darwin/
+
+  ["--add-host", "host.docker.internal:host-gateway"]
+end
+
 def start(command_args, git_readonly: true, extra_volumes: [])
   ensure_volume(VOLUME_NAME)
   ensure_volume(MISE_VOLUME_NAME)
@@ -94,6 +102,7 @@ def start(command_args, git_readonly: true, extra_volumes: [])
 
   docker_cmd = [
     "docker", "run", "--rm",
+    *host_gateway_args,
     "-v", "#{Dir.pwd}:/home/claude/#{workdir}",
     "-v", git_mount,
     "-v", "#{VOLUME_NAME}:/home/claude/.claude",
