@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- `-P` / `--port MAPPING` flag to expose container ports to the host (passed as `-p` to `docker run`). Supports multiple `-P` flags for multi-port setups.
+
 ## [0.3.1] - 2026-04-07
 
 ### Added

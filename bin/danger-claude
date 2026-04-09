@@ -86,7 +86,7 @@ def host_gateway_args
   ["--add-host", "host.docker.internal:host-gateway"]
 end
 
-def start(command_args, git_readonly: true, extra_volumes: [])
+def start(command_args, git_readonly: true, extra_volumes: [], port_mappings: [])
   ensure_volume(VOLUME_NAME)
   ensure_volume(MISE_VOLUME_NAME)
   ensure_volume(GH_VOLUME_NAME)
@@ -100,6 +100,8 @@ def start(command_args, git_readonly: true, extra_volumes: [])
     ["-v", mount]
   end
 
+  port_args = port_mappings.flat_map { |mapping| ["-p", mapping] }
+
   docker_cmd = [
     "docker", "run", "--rm",
     *host_gateway_args,
@@ -109,6 +111,7 @@ def start(command_args, git_readonly: true, extra_volumes: [])
     "-v", "#{MISE_VOLUME_NAME}:/home/claude/.local/share/mise",
     "-v", "#{GH_VOLUME_NAME}:/home/claude/.config/gh",
     *volume_args,
+    *port_args,
     *git_env_args,
     *ssh_agent_args,
     *gh_token_args,
@@ -122,7 +125,7 @@ def start(command_args, git_readonly: true, extra_volumes: [])
   run(*docker_cmd)
 end
 
-options = { volumes: [] }
+options = { volumes: [], ports: [] }
 OptionParser.new do |opts|
   opts.banner = <<~BANNER
     Usage: danger-claude [options] [-- command...]
@@ -136,6 +139,7 @@ OptionParser.new do |opts|
       danger-claude -p "fix" -a mr-fixer    Print mode with a specific subagent
       danger-claude -r SESSION_ID          Resume a previous session
       danger-claude -c                      Auto-commit all changes (.git read-write)
+      danger-claude -P 8080:3000            Expose container port 3000 on host port 8080
       danger-claude -- claude -p "hello"    Run custom command
 
     Options:
@@ -193,6 +197,10 @@ OptionParser.new do |opts|
     options[:volumes] << vol
   end
 
+  opts.on("-P", "--port MAPPING", "Expose a port (host_port:container_port, passed to docker -p)") do |mapping|
+    options[:ports] << mapping
+  end
+
   opts.on("--version", "Show version and exit") do
     puts "danger-claude #{VERSION}"
     exit
@@ -209,7 +217,7 @@ git_rw = options[:git_rw] || options[:commit]
 if options[:build]
   build
 elsif options[:shell]
-  start(["bash"], git_readonly: !git_rw, extra_volumes: options[:volumes])
+  start(["bash"], git_readonly: !git_rw, extra_volumes: options[:volumes], port_mappings: options[:ports])
 elsif options[:print]
   claude_cmd = ["claude", "-p", "--dangerously-skip-permissions"]
   claude_cmd.push("--resume", options[:resume]) if options[:resume]
@@ -220,7 +228,7 @@ elsif options[:print]
   claude_cmd.push("--model", options[:model]) if options[:model]
   claude_cmd.push("--effort", options[:effort]) if options[:effort]
   claude_cmd.push(options[:print])
-  start(claude_cmd, git_readonly: !git_rw, extra_volumes: options[:volumes])
+  start(claude_cmd, git_readonly: !git_rw, extra_volumes: options[:volumes], port_mappings: options[:ports])
 elsif options[:commit]
   commit_prompt = <<~PROMPT
     Review all current git changes (staged and unstaged), add all changes, and create a single commit. \
@@ -232,10 +240,10 @@ elsif options[:commit]
   commit_cmd.push("--model", options[:model]) if options[:model]
   commit_cmd.push("--effort", options[:effort]) if options[:effort]
   commit_cmd.push(commit_prompt.strip)
-  start(commit_cmd, git_readonly: false, extra_volumes: options[:volumes])
+  start(commit_cmd, git_readonly: false, extra_volumes: options[:volumes], port_mappings: options[:ports])
 elsif options[:resume]
   claude_cmd = ["claude", "--dangerously-skip-permissions", "--resume", options[:resume]]
-  start(claude_cmd, git_readonly: !git_rw, extra_volumes: options[:volumes])
+  start(claude_cmd, git_readonly: !git_rw, extra_volumes: options[:volumes], port_mappings: options[:ports])
 else
-  start(ARGV, git_readonly: !git_rw, extra_volumes: options[:volumes])
+  start(ARGV, git_readonly: !git_rw, extra_volumes: options[:volumes], port_mappings: options[:ports])
 end
