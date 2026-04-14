@@ -3,6 +3,7 @@
 
 require "open3"
 require "optparse"
+require "tempfile"
 
 VERSION = "0.3.1"
 IMAGE_NAME = "danger-claude"
@@ -128,19 +129,24 @@ end
 options = { volumes: [], ports: [] }
 OptionParser.new do |opts|
   opts.banner = <<~BANNER
-    Usage: danger-claude [options] [-- command...]
+    Usage: danger-claude [options] [PROMPT]
 
     Run Claude CLI inside a containerized environment.
+    A positional PROMPT argument starts an interactive Claude session with that initial prompt.
+    Pipe content via stdin to inject it as context (mounted read-only at /context/stdin).
 
-    Modes (mutually exclusive):
-      danger-claude                         Interactive claude session (.git read-only)
-      danger-claude -s                      Open a bash shell
+    Examples:
+      danger-claude                         Interactive Claude session (.git read-only)
+      danger-claude "explain this code"     Interactive session with initial prompt
       danger-claude -p "explain this code"  Print mode (non-interactive, .git read-only)
       danger-claude -p "fix" -a mr-fixer    Print mode with a specific subagent
-      danger-claude -r SESSION_ID          Resume a previous session
+      danger-claude -r SESSION_ID           Resume a previous session
       danger-claude -c                      Auto-commit all changes (.git read-write)
+      danger-claude -s                      Open a bash shell
+      danger-claude -s "ls -la"             Run a command in the container
       danger-claude -P 8080:3000            Expose container port 3000 on host port 8080
-      danger-claude -- claude -p "hello"    Run custom command
+      cat log | danger-claude -p "explain"  Pipe context into print mode
+      cat log | danger-claude "explain"     Pipe context into interactive mode
 
     Options:
   BANNER
@@ -149,8 +155,8 @@ OptionParser.new do |opts|
     options[:build] = true
   end
 
-  opts.on("-s", "--shell", "Open a bash shell") do
-    options[:shell] = true
+  opts.on("-s", "--shell [COMMAND]", "Open a shell or run a command in the container") do |cmd|
+    options[:shell] = cmd || true
   end
 
   opts.on("-p", "--print PROMPT", "Run claude in print mode with the given prompt") do |prompt|
@@ -212,12 +218,28 @@ OptionParser.new do |opts|
   end
 end.parse!
 
+# Read piped stdin as context before launching Docker
+stdin_context = nil
+stdin_tempfile = nil
+unless $stdin.tty?
+  content = $stdin.read
+  unless content.strip.empty?
+    stdin_tempfile = Tempfile.new('danger-claude-context-')
+    stdin_tempfile.write(content)
+    stdin_tempfile.flush
+    stdin_context = content
+    options[:volumes] << "#{stdin_tempfile.path}:/context/stdin:ro"
+  end
+end
+at_exit { stdin_tempfile&.close! }
+
 git_rw = options[:git_rw] || options[:commit]
 
 if options[:build]
   build
 elsif options[:shell]
-  start(["bash"], git_readonly: !git_rw, extra_volumes: options[:volumes], port_mappings: options[:ports])
+  shell_cmd = options[:shell] == true ? ["bash"] : ["bash", "-c", options[:shell]]
+  start(shell_cmd, git_readonly: !git_rw, extra_volumes: options[:volumes], port_mappings: options[:ports])
 elsif options[:print]
   claude_cmd = ["claude", "-p", "--dangerously-skip-permissions"]
   claude_cmd.push("--resume", options[:resume]) if options[:resume]
@@ -227,7 +249,9 @@ elsif options[:print]
   claude_cmd.push("--json-schema", options[:json_schema]) if options[:json_schema]
   claude_cmd.push("--model", options[:model]) if options[:model]
   claude_cmd.push("--effort", options[:effort]) if options[:effort]
-  claude_cmd.push(options[:print])
+  prompt = options[:print]
+  prompt = "## Context\n\n#{stdin_context}\n\n---\n\n#{prompt}" if stdin_context
+  claude_cmd.push(prompt)
   start(claude_cmd, git_readonly: !git_rw, extra_volumes: options[:volumes], port_mappings: options[:ports])
 elsif options[:commit]
   commit_prompt = <<~PROMPT
@@ -245,5 +269,13 @@ elsif options[:resume]
   claude_cmd = ["claude", "--dangerously-skip-permissions", "--resume", options[:resume]]
   start(claude_cmd, git_readonly: !git_rw, extra_volumes: options[:volumes], port_mappings: options[:ports])
 else
-  start(ARGV, git_readonly: !git_rw, extra_volumes: options[:volumes], port_mappings: options[:ports])
+  claude_cmd = ["claude", "--dangerously-skip-permissions"]
+  claude_cmd.push("--model", options[:model]) if options[:model]
+  claude_cmd.push("--effort", options[:effort]) if options[:effort]
+  unless ARGV.empty?
+    prompt = ARGV.join(' ')
+    prompt = "## Context\n\n#{stdin_context}\n\n---\n\n#{prompt}" if stdin_context
+    claude_cmd.push(prompt)
+  end
+  start(claude_cmd, git_readonly: !git_rw, extra_volumes: options[:volumes], port_mappings: options[:ports])
 end
