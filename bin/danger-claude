@@ -5,7 +5,7 @@ require "open3"
 require "optparse"
 require "tempfile"
 
-VERSION = "0.3.1"
+VERSION = "0.4.0"
 IMAGE_NAME = "danger-claude"
 VOLUME_NAME = "danger-claude"
 MISE_VOLUME_NAME = "danger-claude-mise"
@@ -230,6 +230,9 @@ unless $stdin.tty?
     stdin_context = content
     options[:volumes] << "#{stdin_tempfile.path}:/context/stdin:ro"
   end
+  # Reopen stdin from the terminal so Docker can allocate a TTY
+  # for interactive Claude sessions after the pipe is consumed.
+  $stdin.reopen('/dev/tty') if $stdout.tty?
 end
 at_exit { stdin_tempfile&.close! }
 

@@ -2,9 +2,11 @@
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-04-14
+
 ### Added
 
-- Stdin piping support: pipe any content into `danger-claude` as context. In print mode (`-p`), the piped content is prepended to the prompt. In interactive mode, it is mounted as `/context/stdin` inside the container. Example: `issue-md <URL> | danger-claude -p "fix this bug"`.
+- Stdin piping support: pipe any content into `danger-claude` as context. In print mode (`-p`), the piped content is prepended to the prompt. In interactive mode, it is mounted as `/context/stdin` inside the container. Stdin is reopened from `/dev/tty` after consumption so interactive Docker sessions retain a working TTY. Example: `issue-md <URL> | danger-claude -p "fix this bug"`.
 - Positional prompt argument: `danger-claude "explain this code"` starts an interactive Claude session with that initial prompt, like the `claude` CLI itself.
 - `-s` / `--shell` now accepts an optional command: `danger-claude -s "ls -la"` runs the command in the container instead of opening a bash shell.
 - `-P` / `--port MAPPING` flag to expose container ports to the host (passed as `-p` to `docker run`). Supports multiple `-P` flags for multi-port setups.
