@@ -5,7 +5,7 @@ require "open3"
 require "optparse"
 require "tempfile"
 
-VERSION = "0.4.0"
+VERSION = "0.4.1"
 IMAGE_NAME = "danger-claude"
 VOLUME_NAME = "danger-claude"
 MISE_VOLUME_NAME = "danger-claude-mise"
@@ -275,10 +275,12 @@ else
   claude_cmd = ["claude", "--dangerously-skip-permissions"]
   claude_cmd.push("--model", options[:model]) if options[:model]
   claude_cmd.push("--effort", options[:effort]) if options[:effort]
-  unless ARGV.empty?
+  if !ARGV.empty?
     prompt = ARGV.join(' ')
     prompt = "## Context\n\n#{stdin_context}\n\n---\n\n#{prompt}" if stdin_context
     claude_cmd.push(prompt)
+  elsif stdin_context
+    claude_cmd.push(stdin_context)
   end
   start(claude_cmd, git_readonly: !git_rw, extra_volumes: options[:volumes], port_mappings: options[:ports])
 end

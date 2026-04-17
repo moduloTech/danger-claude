@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-04-17
+
+### Fixed
+
+- Piped stdin context was silently ignored in interactive mode without a prompt argument (e.g. `issue-md <URL> | danger-claude`). The context is now passed as the initial prompt to Claude.
+
 ## [0.4.0] - 2026-04-14
 
 ### Added
