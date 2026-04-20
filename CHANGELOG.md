@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Install `jq` (JSON processor) and `poppler-utils` (PDF utilities, provides `pdftotext`) in the Docker image.
+
 ## [0.4.1] - 2026-04-17
 
 ### Fixed
