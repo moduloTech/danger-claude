@@ -11,6 +11,20 @@ VOLUME_NAME = "danger-claude"
 MISE_VOLUME_NAME = "danger-claude-mise"
 GH_VOLUME_NAME = "danger-claude-gh"
 
+APPEND_SYSTEM_PROMPT = <<~PROMPT.freeze
+  You are running inside a Docker container (danger-claude). Keep this in mind:
+
+  - Services exposed by the host (databases, Redis, object storage, etc. — typically
+    declared in the project's docker-compose) are reachable via the hostname
+    `host.docker.internal`, not `localhost`. Build connection strings accordingly
+    when the host uses compose-style services.
+  - `mise` is installed and activated in interactive shells, so `ruby`/`node` resolve
+    to the versions pinned by the project. However, when you run non-interactive
+    shell commands (e.g. `sh -c "..."`, one-shot Bash calls), mise's shims are not
+    on PATH — prefix Ruby/Node commands with `mise x ruby --` or `mise x node --`
+    (e.g. `mise x ruby -- bundle exec rspec`).
+PROMPT
+
 def run(*cmd)
   system(*cmd) || exit($?.exitstatus)
 end
@@ -244,7 +258,8 @@ elsif options[:shell]
   shell_cmd = options[:shell] == true ? ["bash"] : ["bash", "-c", options[:shell]]
   start(shell_cmd, git_readonly: !git_rw, extra_volumes: options[:volumes], port_mappings: options[:ports])
 elsif options[:print]
-  claude_cmd = ["claude", "-p", "--dangerously-skip-permissions"]
+  claude_cmd = ["claude", "-p", "--dangerously-skip-permissions",
+                "--append-system-prompt", APPEND_SYSTEM_PROMPT]
   claude_cmd.push("--resume", options[:resume]) if options[:resume]
   claude_cmd.push("--agent", options[:agent]) if options[:agent]
   claude_cmd.push("--max-turns", options[:max_turns].to_s) if options[:max_turns]
@@ -263,16 +278,20 @@ elsif options[:commit]
     Types: feat (new feature), fix (bug fix), refactor (no behavior change), test, docs, chore (maintenance). \
     Do not push. Do not ask for confirmation.
   PROMPT
-  commit_cmd = ["claude", "-p", "--dangerously-skip-permissions"]
+  commit_cmd = ["claude", "-p", "--dangerously-skip-permissions",
+                "--append-system-prompt", APPEND_SYSTEM_PROMPT]
   commit_cmd.push("--model", options[:model]) if options[:model]
   commit_cmd.push("--effort", options[:effort]) if options[:effort]
   commit_cmd.push(commit_prompt.strip)
   start(commit_cmd, git_readonly: false, extra_volumes: options[:volumes], port_mappings: options[:ports])
 elsif options[:resume]
-  claude_cmd = ["claude", "--dangerously-skip-permissions", "--resume", options[:resume]]
+  claude_cmd = ["claude", "--dangerously-skip-permissions",
+                "--append-system-prompt", APPEND_SYSTEM_PROMPT,
+                "--resume", options[:resume]]
   start(claude_cmd, git_readonly: !git_rw, extra_volumes: options[:volumes], port_mappings: options[:ports])
 else
-  claude_cmd = ["claude", "--dangerously-skip-permissions"]
+  claude_cmd = ["claude", "--dangerously-skip-permissions",
+                "--append-system-prompt", APPEND_SYSTEM_PROMPT]
   claude_cmd.push("--model", options[:model]) if options[:model]
   claude_cmd.push("--effort", options[:effort]) if options[:effort]
   if !ARGV.empty?
