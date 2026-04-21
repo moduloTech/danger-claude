@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-04-21
+
 ### Added
 
 - Automatically append a container-awareness system prompt to every `claude` invocation (interactive, `-p`, `-c`, `-r`). Informs Claude that it runs in a Docker container, that host services (databases, Redis, etc. from docker-compose) are reachable via `host.docker.internal`, and that non-interactive Ruby/Node commands should be prefixed with `mise x ruby --` / `mise x node --` since mise shims are not on PATH outside login shells.
