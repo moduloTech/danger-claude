@@ -221,6 +221,11 @@ OptionParser.new do |opts|
     options[:ports] << mapping
   end
 
+  opts.on("--append-system-prompt TEXT",
+          "Override the default container-awareness system prompt appended to claude") do |text|
+    options[:append_system_prompt] = text
+  end
+
   opts.on("--version", "Show version and exit") do
     puts "danger-claude #{VERSION}"
     exit
@@ -251,6 +256,7 @@ end
 at_exit { stdin_tempfile&.close! }
 
 git_rw = options[:git_rw] || options[:commit]
+append_prompt = options[:append_system_prompt] || APPEND_SYSTEM_PROMPT
 
 if options[:build]
   build
@@ -259,7 +265,7 @@ elsif options[:shell]
   start(shell_cmd, git_readonly: !git_rw, extra_volumes: options[:volumes], port_mappings: options[:ports])
 elsif options[:print]
   claude_cmd = ["claude", "-p", "--dangerously-skip-permissions",
-                "--append-system-prompt", APPEND_SYSTEM_PROMPT]
+                "--append-system-prompt", append_prompt]
   claude_cmd.push("--resume", options[:resume]) if options[:resume]
   claude_cmd.push("--agent", options[:agent]) if options[:agent]
   claude_cmd.push("--max-turns", options[:max_turns].to_s) if options[:max_turns]
@@ -279,19 +285,19 @@ elsif options[:commit]
     Do not push. Do not ask for confirmation.
   PROMPT
   commit_cmd = ["claude", "-p", "--dangerously-skip-permissions",
-                "--append-system-prompt", APPEND_SYSTEM_PROMPT]
+                "--append-system-prompt", append_prompt]
   commit_cmd.push("--model", options[:model]) if options[:model]
   commit_cmd.push("--effort", options[:effort]) if options[:effort]
   commit_cmd.push(commit_prompt.strip)
   start(commit_cmd, git_readonly: false, extra_volumes: options[:volumes], port_mappings: options[:ports])
 elsif options[:resume]
   claude_cmd = ["claude", "--dangerously-skip-permissions",
-                "--append-system-prompt", APPEND_SYSTEM_PROMPT,
+                "--append-system-prompt", append_prompt,
                 "--resume", options[:resume]]
   start(claude_cmd, git_readonly: !git_rw, extra_volumes: options[:volumes], port_mappings: options[:ports])
 else
   claude_cmd = ["claude", "--dangerously-skip-permissions",
-                "--append-system-prompt", APPEND_SYSTEM_PROMPT]
+                "--append-system-prompt", append_prompt]
   claude_cmd.push("--model", options[:model]) if options[:model]
   claude_cmd.push("--effort", options[:effort]) if options[:effort]
   if !ARGV.empty?

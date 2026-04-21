@@ -5,6 +5,7 @@
 ### Added
 
 - Automatically append a container-awareness system prompt to every `claude` invocation (interactive, `-p`, `-c`, `-r`). Informs Claude that it runs in a Docker container, that host services (databases, Redis, etc. from docker-compose) are reachable via `host.docker.internal`, and that non-interactive Ruby/Node commands should be prefixed with `mise x ruby --` / `mise x node --` since mise shims are not on PATH outside login shells.
+- `--append-system-prompt TEXT` CLI option that overrides the default container-awareness prompt with a custom text, forwarded as-is to `claude --append-system-prompt`.
 
 ## [0.4.2] - 2026-04-20
 
