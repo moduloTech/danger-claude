@@ -2,7 +2,7 @@ FROM debian:bookworm-slim
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-       curl ca-certificates procps tmux git openssh-client build-essential zlib1g-dev libffi-dev libreadline-dev libyaml-dev libpq-dev libmariadb-dev jq poppler-utils wkhtmltopdf
+       curl ca-certificates procps tmux git openssh-client build-essential zlib1g-dev libffi-dev libreadline-dev libyaml-dev libpq-dev libmariadb-dev postgresql-client default-mysql-client sqlite3 jq poppler-utils wkhtmltopdf
 
 RUN install -dm 755 /etc/apt/keyrings \
     && curl -fSs https://mise.jdx.dev/gpg-key.pub | tee /etc/apt/keyrings/mise-archive-keyring.asc 1> /dev/null \

@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-04-23
+
+### Added
+
+- Install database client CLIs in the Docker image: `postgresql-client` (provides `psql`, `pg_dump`), `default-mysql-client` (provides `mysql`, `mysqldump`), and `sqlite3`.
+
 ## [0.5.1] - 2026-04-21
 
 ### Added
