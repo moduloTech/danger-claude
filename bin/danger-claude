@@ -5,7 +5,7 @@ require "open3"
 require "optparse"
 require "tempfile"
 
-VERSION = "0.5.4"
+VERSION = "0.5.5"
 IMAGE_NAME = "danger-claude"
 VOLUME_NAME = "danger-claude"
 MISE_VOLUME_NAME = "danger-claude-mise"
@@ -84,6 +84,15 @@ def gh_token_args
   ["-e", "GH_TOKEN=#{token}"]
 end
 
+# Mount the host's known_hosts so SSH host verification works for git remotes
+# without baking host keys into the image.
+def ssh_known_hosts_args
+  path = File.expand_path("~/.ssh/known_hosts")
+  return [] unless File.file?(path)
+
+  ["-v", "#{path}:/home/claude/.ssh/known_hosts:ro"]
+end
+
 def mise_trusted_paths_args(workdir, extra_volumes)
   paths = ["/home/claude/#{workdir}"]
   extra_volumes.each do |vol|
@@ -150,6 +159,7 @@ def start(command_args, git_readonly: true, extra_volumes: [], port_mappings: []
     *port_args,
     *git_env_args,
     *ssh_agent_args,
+    *ssh_known_hosts_args,
     *gh_token_args,
     *mise_trusted_paths_args(workdir, extra_volumes),
     "-w", "/home/claude/#{workdir}",

@@ -57,6 +57,10 @@ exec "${@:-bash}"\n' > /entrypoint.sh \
 RUN mkdir -p /home/claude/.config/gh /home/claude/.local/share/mise \
     && chown -R claude:claude /home/claude/.config /home/claude/.local
 
+# Pre-create .ssh with strict perms so a bind-mounted known_hosts is accepted
+# by ssh (which refuses world-accessible parent dirs).
+RUN install -d -m 700 -o claude -g claude /home/claude/.ssh
+
 USER claude
 
 RUN curl -fsSL https://claude.ai/install.sh | bash

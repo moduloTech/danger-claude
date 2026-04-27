@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.5.5] - 2026-04-27
+
+### Fixed
+
+- SSH host key verification (`Host key verification failed`) when pushing/pulling from git remotes inside the container. The host's `~/.ssh/known_hosts` is now bind-mounted read-only at `/home/claude/.ssh/known_hosts`, so any host the user trusts on their machine (github.com, gitlab.com, internal forges like `source.modulotech.fr`) is also trusted in the container. The Dockerfile pre-creates `/home/claude/.ssh` with mode 700 so SSH accepts the mounted file. Requires an image rebuild (`danger-claude --build`).
+
 ## [0.5.4] - 2026-04-27
 
 ### Fixed
