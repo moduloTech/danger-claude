@@ -5,7 +5,7 @@ require "open3"
 require "optparse"
 require "tempfile"
 
-VERSION = "0.5.3"
+VERSION = "0.5.4"
 IMAGE_NAME = "danger-claude"
 VOLUME_NAME = "danger-claude"
 MISE_VOLUME_NAME = "danger-claude-mise"
@@ -101,6 +101,26 @@ def host_gateway_args
   ["--add-host", "host.docker.internal:host-gateway"]
 end
 
+# For git worktrees, the `.git` file points to a host path that isn't reachable
+# inside the container; bind-mount the gitdir + common gitdir at the same paths.
+def worktree_gitdir_args(pwd, readonly:)
+  git_path = File.join(pwd, ".git")
+  return [] unless File.file?(git_path)
+
+  gitdir_out, gitdir_st = Open3.capture2("git", "-C", pwd, "rev-parse", "--git-dir")
+  common_out, common_st = Open3.capture2("git", "-C", pwd, "rev-parse", "--git-common-dir")
+  return [] unless gitdir_st.success? && common_st.success?
+
+  gitdir = File.expand_path(gitdir_out.strip, pwd)
+  common = File.expand_path(common_out.strip, pwd)
+
+  paths = [common]
+  paths << gitdir unless gitdir == common || gitdir.start_with?("#{common}/")
+
+  suffix = readonly ? ":ro" : ""
+  paths.flat_map { |p| ["-v", "#{p}:#{p}#{suffix}"] }
+end
+
 def start(command_args, git_readonly: true, extra_volumes: [], port_mappings: [])
   ensure_volume(VOLUME_NAME)
   ensure_volume(MISE_VOLUME_NAME)
@@ -122,6 +142,7 @@ def start(command_args, git_readonly: true, extra_volumes: [], port_mappings: []
     *host_gateway_args,
     "-v", "#{Dir.pwd}:/home/claude/#{workdir}",
     "-v", git_mount,
+    *worktree_gitdir_args(Dir.pwd, readonly: git_readonly),
     "-v", "#{VOLUME_NAME}:/home/claude/.claude",
     "-v", "#{MISE_VOLUME_NAME}:/home/claude/.local/share/mise",
     "-v", "#{GH_VOLUME_NAME}:/home/claude/.config/gh",

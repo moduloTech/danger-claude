@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.5.4] - 2026-04-27
+
+### Fixed
+
+- Git worktrees (including `wtclone`-style bare-repo layouts) now work inside the container. When `.git` is a file pointing to an external gitdir (e.g. `/Users/.../.bare/worktrees/<name>`), that host path is unreachable in the container and git fails with `fatal: not a git repository`. The launcher now detects worktrees and bind-mounts the worktree's gitdir and common gitdir at the same paths inside the container so the `.git` pointer resolves. Read-only / read-write follows the existing `.git` mount policy (`-c` / `-g` for rw).
+
 ## [0.5.3] - 2026-04-27
 
 ### Added
