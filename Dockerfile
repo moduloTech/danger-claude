@@ -2,7 +2,7 @@ FROM debian:bookworm-slim
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-       curl ca-certificates procps tmux git openssh-client build-essential zlib1g-dev libffi-dev libreadline-dev libyaml-dev libpq-dev libmariadb-dev postgresql-client default-mysql-client sqlite3 jq poppler-utils wkhtmltopdf
+       curl ca-certificates procps tmux git openssh-client build-essential zlib1g-dev libffi-dev libreadline-dev libyaml-dev libpq-dev libmariadb-dev postgresql-client default-mysql-client sqlite3 jq poppler-utils wkhtmltopdf pandoc xz-utils
 
 RUN install -dm 755 /etc/apt/keyrings \
     && curl -fSs https://mise.jdx.dev/gpg-key.pub | tee /etc/apt/keyrings/mise-archive-keyring.asc 1> /dev/null \
@@ -10,6 +10,18 @@ RUN install -dm 755 /etc/apt/keyrings \
     && curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
     && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list \
     && apt update -y && apt install -y mise gh
+
+# Typst is not packaged in Debian bookworm; fetch the upstream static musl build.
+RUN ARCH=$(dpkg --print-architecture) \
+    && case "$ARCH" in \
+         amd64) TYPST_ARCH=x86_64-unknown-linux-musl ;; \
+         arm64) TYPST_ARCH=aarch64-unknown-linux-musl ;; \
+         *) echo "Unsupported architecture: $ARCH" >&2 && exit 1 ;; \
+       esac \
+    && curl -fsSL -o /tmp/typst.tar.xz "https://github.com/typst/typst/releases/latest/download/typst-${TYPST_ARCH}.tar.xz" \
+    && tar -xf /tmp/typst.tar.xz -C /tmp \
+    && install -m 0755 "/tmp/typst-${TYPST_ARCH}/typst" /usr/local/bin/typst \
+    && rm -rf /tmp/typst.tar.xz "/tmp/typst-${TYPST_ARCH}"
 
 RUN rm -rf /var/lib/apt/lists/*
 

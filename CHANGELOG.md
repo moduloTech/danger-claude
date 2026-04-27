@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [0.5.3] - 2026-04-27
+
+### Added
+
+- Install `pandoc` (universal document converter) in the Docker image.
+- Install `typst` (modern typesetting system) in the Docker image via the upstream static musl binary (Typst is not packaged in Debian bookworm). Architecture-aware: amd64 and arm64 supported.
+
 ## [0.5.2] - 2026-04-23
 
 ### Added
