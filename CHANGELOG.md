@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Install `imagemagick` (image manipulation, provides `convert`/`magick`) and `ripgrep` (fast recursive grep, provides `rg`) in the Docker image.
+
 ## [0.5.5] - 2026-04-27
 
 ### Fixed
