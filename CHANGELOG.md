@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.5.7] - 2026-05-13
+
+### Added
+
+- Forward `--resume SESSION_ID` and `--output-format` to `claude` in commit mode (`-c`), so a commit can continue a session that was started by an earlier `-p` invocation. Previously only the print mode branch (`-p`) wired these flags through; the commit branch built its own stripped-down `claude` command that ignored them, breaking any caller that tried to chain `implement (-p -r X)` → `commit (-c -r X)`. The `--resume` propagation lets a wrapper like autodev keep the cache warm across the implement → commit boundary; the `--output-format` propagation lets the caller parse `session_id` out of the commit's response too. No flag added — both options already existed at the OptionParser layer, only the commit-mode dispatch ignored them.
+
 ## [0.5.6] - 2026-05-12
 
 ### Added

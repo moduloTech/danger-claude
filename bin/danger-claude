@@ -5,7 +5,7 @@ require "open3"
 require "optparse"
 require "tempfile"
 
-VERSION = "0.5.6"
+VERSION = "0.5.7"
 IMAGE_NAME = "danger-claude"
 VOLUME_NAME = "danger-claude"
 MISE_VOLUME_NAME = "danger-claude-mise"
@@ -317,6 +317,8 @@ elsif options[:commit]
   PROMPT
   commit_cmd = ["claude", "-p", "--dangerously-skip-permissions",
                 "--append-system-prompt", append_prompt]
+  commit_cmd.push("--resume", options[:resume]) if options[:resume]
+  commit_cmd.push("--output-format", options[:output_format]) if options[:output_format]
   commit_cmd.push("--model", options[:model]) if options[:model]
   commit_cmd.push("--effort", options[:effort]) if options[:effort]
   commit_cmd.push(commit_prompt.strip)
