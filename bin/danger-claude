@@ -5,7 +5,7 @@ require "open3"
 require "optparse"
 require "tempfile"
 
-VERSION = "0.5.8"
+VERSION = "0.5.9"
 IMAGE_NAME = "danger-claude"
 VOLUME_NAME = "danger-claude"
 MISE_VOLUME_NAME = "danger-claude-mise"
@@ -157,7 +157,7 @@ def start(command_args, git_readonly: true, extra_volumes: [], port_mappings: []
     "-v", "#{VOLUME_NAME}:/home/claude/.claude",
     "-v", "#{MISE_VOLUME_NAME}:/home/claude/.local/share/mise",
     "-v", "#{GH_VOLUME_NAME}:/home/claude/.config/gh",
-    "-v", "#{GLAB_VOLUME_NAME}:/home/claude/.config/glab",
+    "-v", "#{GLAB_VOLUME_NAME}:/home/claude/.config/glab-cli",
     *volume_args,
     *port_args,
     *git_env_args,

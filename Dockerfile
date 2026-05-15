@@ -68,7 +68,7 @@ exec "${@:-bash}"\n' > /entrypoint.sh \
 
 # Pre-create mount points for named volumes so they inherit claude ownership
 # instead of being created as root by Docker on first mount.
-RUN mkdir -p /home/claude/.config/gh /home/claude/.config/glab /home/claude/.local/share/mise \
+RUN mkdir -p /home/claude/.config/gh /home/claude/.config/glab-cli /home/claude/.local/share/mise \
     && chown -R claude:claude /home/claude/.config /home/claude/.local
 
 # Pre-create .ssh with strict perms so a bind-mounted known_hosts is accepted

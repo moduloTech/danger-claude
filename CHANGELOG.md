@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.5.9] - 2026-05-15
+
+### Fixed
+
+- glab persistence was broken in 0.5.8: the volume was mounted at `/home/claude/.config/glab` but glab actually writes to `/home/claude/.config/glab-cli` per its upstream `ConfigDir()` which joins `xdg.ConfigHome` with the hardcoded `"glab-cli"` directory name (verified in `internal/config/config_file.go`). Mount point and pre-created dir both corrected to `.config/glab-cli`. Anyone who already ran `glab auth login` in 0.5.8 must redo it after upgrade. The Docker volume name (`danger-claude-glab`) is unchanged — only its mount target moved.
+
 ## [0.5.8] - 2026-05-15
 
 ### Added
