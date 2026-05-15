@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [0.5.8] - 2026-05-15
+
+### Added
+
+- Install `glab` (GitLab CLI) in the Docker image, mirroring the existing `gh` setup. No Debian package is published for arm64, so the upstream tarball is used for both amd64 and arm64 — same pattern as typst — installed to `/usr/local/bin/glab`. Pinned to v1.97.0 to keep the build reproducible.
+- Persist `glab` config across `danger-claude` invocations via a new named Docker volume `danger-claude-glab` mounted at `/home/claude/.config/glab` (parallel to `danger-claude-gh` for `gh`). The volume is auto-created on first run via `ensure_volume`, and the mount point is pre-created with `claude:claude` ownership in the image so Docker copies the correct permissions into the volume on first attach. After running `glab auth login` once inside the container, subsequent sessions skip the prompt — same UX as `gh`.
+
 ## [0.5.7] - 2026-05-13
 
 ### Added

@@ -11,6 +11,20 @@ RUN install -dm 755 /etc/apt/keyrings \
     && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list \
     && apt update -y && apt install -y mise gh
 
+# glab (GitLab CLI) is not packaged in Debian; fetch the upstream static build.
+# No arm64 .deb is published, but the tarball ships both amd64 and arm64.
+RUN ARCH=$(dpkg --print-architecture) \
+    && case "$ARCH" in \
+         amd64|arm64) ;; \
+         *) echo "Unsupported architecture for glab: $ARCH" >&2 && exit 1 ;; \
+       esac \
+    && GLAB_VERSION=1.97.0 \
+    && curl -fsSL -o /tmp/glab.tar.gz "https://gitlab.com/gitlab-org/cli/-/releases/v${GLAB_VERSION}/downloads/glab_${GLAB_VERSION}_linux_${ARCH}.tar.gz" \
+    && mkdir -p /tmp/glab \
+    && tar -xzf /tmp/glab.tar.gz -C /tmp/glab \
+    && install -m 0755 /tmp/glab/bin/glab /usr/local/bin/glab \
+    && rm -rf /tmp/glab.tar.gz /tmp/glab
+
 # Typst is not packaged in Debian bookworm; fetch the upstream static musl build.
 RUN ARCH=$(dpkg --print-architecture) \
     && case "$ARCH" in \
@@ -54,7 +68,7 @@ exec "${@:-bash}"\n' > /entrypoint.sh \
 
 # Pre-create mount points for named volumes so they inherit claude ownership
 # instead of being created as root by Docker on first mount.
-RUN mkdir -p /home/claude/.config/gh /home/claude/.local/share/mise \
+RUN mkdir -p /home/claude/.config/gh /home/claude/.config/glab /home/claude/.local/share/mise \
     && chown -R claude:claude /home/claude/.config /home/claude/.local
 
 # Pre-create .ssh with strict perms so a bind-mounted known_hosts is accepted
