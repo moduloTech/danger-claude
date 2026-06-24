@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+## [0.5.10] - 2026-06-24
+
+### Fixed
+
+- Print mode (`-p`) now delivers the prompt to the in-container `claude` via **stdin** instead of as an argv argument. Large prompts (e.g. a 158 KB MR review context from `mr-review`) exceeded the Linux per-argument limit (`MAX_ARG_STRLEN`, 128 KB), so the container's `exec /entrypoint.sh` failed with `argument list too long` (E2BIG). The prompt is written to a tempfile and piped via `docker run -i`.
+
+### Changed
+
+- `--print`/`-p` now takes an **optional** argument: the prompt may be supplied as the flag value (`-p "review this"`) or piped entirely via stdin (`cat prompt | danger-claude -p`). This lets callers avoid the argv size limit for large prompts.
+
 ## [0.5.9] - 2026-05-15
 
 ### Fixed

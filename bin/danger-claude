@@ -5,7 +5,7 @@ require "open3"
 require "optparse"
 require "tempfile"
 
-VERSION = "0.5.9"
+VERSION = "0.5.10"
 IMAGE_NAME = "danger-claude"
 VOLUME_NAME = "danger-claude"
 MISE_VOLUME_NAME = "danger-claude-mise"
@@ -26,8 +26,21 @@ APPEND_SYSTEM_PROMPT = <<~PROMPT.freeze
     (e.g. `mise x ruby -- bundle exec rspec`).
 PROMPT
 
-def run(*cmd)
-  system(*cmd) || exit($?.exitstatus)
+def run(*cmd, stdin_data: nil)
+  return (system(*cmd) || exit($?.exitstatus)) if stdin_data.nil?
+
+  # Redirect the child's stdin from a tempfile rather than passing the data as
+  # an argv argument — large prompts (hundreds of KB) exceed the kernel's
+  # per-argument limit and make the container's `exec` fail with E2BIG.
+  stdin_file = Tempfile.new("danger-claude-stdin-")
+  begin
+    stdin_file.write(stdin_data)
+    stdin_file.flush
+    stdin_file.close
+    system(*cmd, in: stdin_file.path) || exit($?.exitstatus)
+  ensure
+    stdin_file.close!
+  end
 end
 
 def docker_volume_exists?(name)
@@ -131,7 +144,7 @@ def worktree_gitdir_args(pwd, readonly:)
   paths.flat_map { |p| ["-v", "#{p}:#{p}#{suffix}"] }
 end
 
-def start(command_args, git_readonly: true, extra_volumes: [], port_mappings: [])
+def start(command_args, git_readonly: true, extra_volumes: [], port_mappings: [], stdin_data: nil)
   ensure_volume(VOLUME_NAME)
   ensure_volume(MISE_VOLUME_NAME)
   ensure_volume(GH_VOLUME_NAME)
@@ -166,12 +179,14 @@ def start(command_args, git_readonly: true, extra_volumes: [], port_mappings: []
     *gh_token_args,
     *mise_trusted_paths_args(workdir, extra_volumes),
     "-w", "/home/claude/#{workdir}",
-    *($stdin.tty? ? ["-ti"] : ["-i"]),
+    # When a prompt is piped in via stdin_data, never allocate a TTY: `-t` with a
+    # redirected (non-tty) stdin makes docker fail with "the input device is not a TTY".
+    *(stdin_data ? ["-i"] : ($stdin.tty? ? ["-ti"] : ["-i"])),
     IMAGE_NAME,
     *command_args
   ]
 
-  run(*docker_cmd)
+  run(*docker_cmd, stdin_data: stdin_data)
 end
 
 options = { volumes: [], ports: [] }
@@ -207,8 +222,9 @@ OptionParser.new do |opts|
     options[:shell] = cmd || true
   end
 
-  opts.on("-p", "--print PROMPT", "Run claude in print mode with the given prompt") do |prompt|
-    options[:print] = prompt
+  opts.on("-p", "--print [PROMPT]", "Run claude in print mode (prompt as arg or piped via stdin)") do |prompt|
+    options[:print] = true
+    options[:prompt] = prompt
   end
 
   opts.on("-a", "--agent NAME", "Use a specific subagent (passed as --agent to claude)") do |name|
@@ -307,10 +323,17 @@ elsif options[:print]
   claude_cmd.push("--json-schema", options[:json_schema]) if options[:json_schema]
   claude_cmd.push("--model", options[:model]) if options[:model]
   claude_cmd.push("--effort", options[:effort]) if options[:effort]
-  prompt = options[:print]
-  prompt = "## Context\n\n#{stdin_context}\n\n---\n\n#{prompt}" if stdin_context
-  claude_cmd.push(prompt)
-  start(claude_cmd, git_readonly: !git_rw, extra_volumes: options[:volumes], port_mappings: options[:ports])
+  # Deliver the prompt to claude via stdin (not as an argv argument): review/issue
+  # contexts can be hundreds of KB, which busts the Linux per-argument limit
+  # (MAX_ARG_STRLEN, 128 KB) and makes the container's `exec` fail with E2BIG.
+  prompt = options[:prompt]
+  prompt = if prompt && stdin_context
+             "## Context\n\n#{stdin_context}\n\n---\n\n#{prompt}"
+           else
+             prompt || stdin_context
+           end
+  start(claude_cmd, git_readonly: !git_rw, extra_volumes: options[:volumes],
+        port_mappings: options[:ports], stdin_data: prompt.to_s)
 elsif options[:commit]
   commit_prompt = <<~PROMPT
     Review all current git changes (staged and unstaged), add all changes, and create a single commit. \
